@@ -15,7 +15,8 @@ using namespace std;
 
 string get_input_file();
 string hex_decoder(string hex_addr);
-string instructions_decoder(string binary_addr);
+string instructions_decoder(string binary_addr,int Register[], int Memory[], int counter[]);
+
 
 class instructions_exe {
 
@@ -30,8 +31,23 @@ public:
     void mul_func() {
 
     }
-    void addi_func() {
+    void addi_func(string binary_addr, int Register[], int Memory[]) {
+        
+        //Get instruction decoder
+        string rs_bin = binary_addr.substr(6, 5);
+        string rt_bin = binary_addr.substr(11, 5);
+        string Imm_bin = binary_addr.substr(16, 16);
 
+        //Convert the binary value to dec
+        int rs = stoi(rs_bin, nullptr, 2);
+        int rt = stoi(rt_bin, nullptr, 2);
+        int Imm = stoi(Imm_bin, nullptr, 2);
+        
+        //Set the value to the register, [rt] = [rs] + Imm
+        Register[rt] = Register[rs] + Imm;
+
+        cout << rt << ": " << Register[rt] << endl;
+        
     }
 };
 
@@ -41,10 +57,29 @@ public:
 int main()
 {
     string test_line;
-    string user_test_file = get_input_file();
+    string user_test_file;
     ifstream inFile;
     string binary_code;
+    int Register [32];
+    int Memory[32768];
+    int counter[5];
 
+    //initialize register array
+    for (int i = 0; i < 32; i++) {
+        Register[i] = 0;
+    }
+
+    //initialize memory array
+    for (int i = 0; i < 32768; i++) {
+        Memory[i] = 0;
+    }
+
+    //initialize counter array
+    for (int i = 0; i < 5; i++) {
+        counter[i] = 0;
+    }
+
+    user_test_file = get_input_file();
     inFile.open(user_test_file);
 
     while (!inFile.eof()) {
@@ -53,9 +88,24 @@ int main()
         binary_code = hex_decoder(test_line);
         cout << binary_code << endl;
 
-        string result = instructions_decoder(binary_code);
+        //Get the total number of instructions counter[0]
+        //Get the total number of arithmetic instructions counter[1]
+        //Get the total number of logical instructions counter[2]
+        //Get the total number of memory instructions counter[3]
+        //Get the total number of control transfer instructions counter[4]
 
+        counter[0] = counter[0] + 1;
+
+        string result = instructions_decoder(binary_code, Register, Memory, counter);
     }
+
+
+    cout << "\n**** Instructions count summary ****" << endl;
+    cout << "Total number of instructions: " << counter[0] << endl;
+    cout << "Total number of arithmetic instructions: " << counter[1] << endl;
+    cout << "Total number of logical instructions: " << counter[2] << endl;
+    cout << "Total number of memory instructions: " << counter[3] << endl;
+    cout << "Total number of control transfer instructions: " << counter[4] << endl;
 }
 
 //Get user input file and check if the file is valid
@@ -64,7 +114,8 @@ string get_input_file() {
 
 
     cout << "Please enter a valid test file:\n";
-    cin >> input_file;
+    //cin >> input_file;
+    input_file = "C:/Users/taipham/source/repos/ECE586_FinalProject/sample_memory_image.txt";
 
     //input C:\Users\taipham\source\repos\ECE586_FinalProject\sample_memory_image.txt
     cout << "Input file: " << input_file << endl;
@@ -174,35 +225,42 @@ string hex_decoder(string hex_addr) {
 }
 
 //Instruction decoder
-string instructions_decoder(string binary_addr) {
+string instructions_decoder(string binary_addr, int Register[], int Memory[], int counter[]) {
     instructions_exe function;
-    string result;
+    string result;    
 
     if (binary_addr != "00000000000000000000000000000000") {
         string opcode = binary_addr.substr(0, 6);
 
         if (opcode == "000000") {
             cout << "call ADD function..." << endl;
+            counter[1] = counter[1] + 1;
         }
         else if (opcode == "000010") {
 
             cout << "call SUB function..." << endl;
+            counter[1] = counter[1] + 1;
         }
         else if (opcode == "000100") {
 
             cout << "call MUL function..." << endl;
+            counter[1] = counter[1] + 1;
         }
         else if (opcode == "000001") {
 
             cout << "call ADDI function..." << endl;
+            counter[1] = counter[1] + 1;
+            function.addi_func(binary_addr, Register, Memory);
         }
         else if (opcode == "000011") {
 
             cout << "call SUBI function..." << endl;
+            counter[1] = counter[1] + 1;
         }
         else if (opcode == "000101") {
 
             cout << "call MULI function..." << endl;
+            counter[1] = counter[1] + 1;
         }
     }
     
